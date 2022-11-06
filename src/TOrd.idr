@@ -6,10 +6,14 @@ import Logic
 
 infix 6 `EQ`, `LT`, `GT`, `LE`, `GT`
 
+public export
+data Decide3 p q r = Case1 p | Case2 q | Case3 r
+
 
 public export
 Relation : Type -> Type
 Relation a = a -> a -> Type
+
 
 export
 interface TOrd a where
@@ -20,16 +24,21 @@ interface TOrd a where
 
   GT : Relation a
   GE : Relation a
+
+  cmp : (x : a) -> (y : a) -> Decide3 (x `LT` y) (x `EQ` y) (x `GT` y)
   
 
+  -- TODO should I keep these?
   eq : (x : a) -> (y : a) -> Decide (x `EQ` y)
 
   le : (x : a) -> (y : a) -> Decide (x `LE` y)
   lt : (x : a) -> (y : a) -> Decide (x `LT` y)
   ge : (x : a) -> (y : a) -> Decide (x `GE` y)
   gt : (x : a) -> (y : a) -> Decide (x `GT` y)
-
   
+  
+  
+  -- TODO should I keep these?
   0 equalEQ : {x : a} -> x `EQ` x
 
   0 eqle : {x, y : a} -> x `EQ` y -> x `LE` y
@@ -37,7 +46,6 @@ interface TOrd a where
   
   0 eqge : {x, y : a} -> x `EQ` y -> x `GE` y
   0 gtge : {x, y : a} -> x `GT` y -> x `GE` y
-  
   
   0 nlegt : {x, y : a} -> Not (x `LE` y) -> x `GT` y
   0 gtnle : {x, y : a} -> x `GT` y -> Not (x `LE` y)
@@ -51,7 +59,7 @@ interface TOrd a where
   0 gtlt : {x, y : a} -> y `GT` x -> x `LT` y
   
 
-
+  
 
 
 export
@@ -61,6 +69,8 @@ xlex {x = x} = eqle @{ord} {x = x, y = x} equalEQ
 export
 0 xgex : (ord : TOrd a) => {x : a} -> x `GE` x
 xgex {x = x} = eqge @{ord} {x = x, y = x} equalEQ
+
+
 
 
 public export
@@ -74,7 +84,12 @@ implementation TOrd Integer where
   x `GT` y = So (x > y)
   x `GE` y = So (x >= y)
   
-
+  cmp x y with (x < y)
+    cmp x y | True = Case1 Oh
+    cmp x y | False with (x == y)
+      cmp x y | False | True = Case2 Oh
+      cmp x y | False | False = Case3 (believe_me Oh)
+  
   x `eq` y with (x == y)
     x `eq` y | True   = Right Oh
     x `eq` y | False  = Left (\x => case x of {})
@@ -94,7 +109,7 @@ implementation TOrd Integer where
   x `gt` y with (x > y)
     x `gt` y | True   = Right Oh
     x `gt` y | False  = Left (\x => case x of {})
-
+  
   
   -- TODO this should have proofs somewhere
   equalEQ = believe_me ()
